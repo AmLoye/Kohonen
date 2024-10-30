@@ -1,15 +1,20 @@
-#initialisation de la grille
+#topologie du réseau
 
-d = 2 #la grille est un carré
+d = 2 #dimension du réseau
 n = 100 #nombre de neurones du réseau
-l = 10
-#I
+l = 10 #longueur du premier coté du réseau
+L = 10 #longueur du deuxième coté du réseau
+I = c(l,L) #ici le réseau est un carré : [|0, l|] x [|0, L|]
 
-#initialisation du jeu de vecteurs selon une loi uniforme sur [|0, l|]^d
-#X = (tableau de vecteurs ou liste de vecteurs)
+#paramètres du jeu de vecteurs
+
+N = 300 #nombre de vecteurs
 p = 2 #dimension des vecteurs
 
-M = 1000
+
+#paramètres de l'algo
+
+M = 1000 #seuil de l'algo
 
 dist = function(i, j, d){
   #calcul la distance euclidienne entre deux neurones i et j
@@ -20,9 +25,20 @@ dist = function(i, j, d){
   return(sqrt(sum))
 }
 
+min_lexicographique = function(u, v, d){
+  for (i in 1:d){
+    if (u[i] < v[i]){
+      return(u)
+    }
+    if (v[i] < u[i]){
+      return(v)
+    }
+  }
+  return(u)
+}
+
 sigma_i = 5
 sigma_f = 0.2
-
 sigma = function(t){
   return(sigma_i*((sigma_f/sigma_i)**(t/M)))
 }
@@ -31,9 +47,11 @@ delta = function(t, i, j){
   return(exp(-(dist(i, j)**2)/(2*sigma(t)**2)))
 }
 
-
 epsilon_i = 0.1
 epsilon_f = 0.005
 epsilon = function(t){
   return(epsilon_i*(epsilon_f/epsilon_i)**(t/M))
 }
+
+
+
