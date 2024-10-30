@@ -16,3 +16,5 @@ Bibliographie
 M.Cottrell, S. Ibbou, P. Letremy„ P. Rousset, “Cartes organisées pour l’analyse exploratoire
 des données et la visualisation", Journal de la Société Française de Statistique, n° 144, p. 67-106,
 (2003). (https://arxiv.org/abs/math/0611422)
+https://fr.wikipedia.org/wiki/Carte_autoadaptative
+https://shiny.posit.co/r/getstarted/shiny-basics/lesson1/index.html
