@@ -1,0 +1,39 @@
+#initialisation de la grille
+
+d = 2 #la grille est un carré
+n = 100 #nombre de neurones du réseau
+l = 10
+#I
+
+#initialisation du jeu de vecteurs selon une loi uniforme sur [|0, l|]^d
+#X = (tableau de vecteurs ou liste de vecteurs)
+p = 2 #dimension des vecteurs
+
+M = 1000
+
+dist = function(i, j, d){
+  #calcul la distance euclidienne entre deux neurones i et j
+  sum = 0
+  for (k in 1:d){
+    sum = sum + (i[k] - j[k])**2
+  }
+  return(sqrt(sum))
+}
+
+sigma_i = 5
+sigma_f = 0.2
+
+sigma = function(t){
+  return(sigma_i*((sigma_f/sigma_i)**(t/M)))
+}
+
+delta = function(t, i, j){
+  return(exp(-(dist(i, j)**2)/(2*sigma(t)**2)))
+}
+
+
+epsilon_i = 0.1
+epsilon_f = 0.005
+epsilon = function(t){
+  return(epsilon_i*(epsilon_f/epsilon_i)**(t/M))
+}
