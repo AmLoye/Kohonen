@@ -9,12 +9,12 @@ des choix de paramètres. Pour l’application R-Shiny, on considérera des donn
 2, et une grille en dimension 1 ou 2. L’avantage est qu’on pourra superposer graphiquement
 l’espace des données et la grille et représenter les vecteurs Wi dans l’espace des données. L’objet
 de l’interface est d’être un outil pédagogique permettant de visualiser facilement le mécanisme
-d’auto-organisation des vecteurs Wi.
-
+d’auto-organisation des vecteurs Wi.  
 
 Bibliographie
+  
 M.Cottrell, S. Ibbou, P. Letremy„ P. Rousset, “Cartes organisées pour l’analyse exploratoire
 des données et la visualisation", Journal de la Société Française de Statistique, n° 144, p. 67-106,
-(2003). (https://arxiv.org/abs/math/0611422)
-La page wikipedia : https://fr.wikipedia.org/wiki/Carte_autoadaptative
+(2003). (https://arxiv.org/abs/math/0611422)  
+La page wikipedia : https://fr.wikipedia.org/wiki/Carte_autoadaptative  
 Une intro à shiny : https://shiny.posit.co/r/getstarted/shiny-basics/lesson1/index.html
