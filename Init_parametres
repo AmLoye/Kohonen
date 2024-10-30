@@ -4,7 +4,7 @@ d = 2 #dimension du réseau
 n = 100 #nombre de neurones du réseau
 l = 10 #longueur du premier coté du réseau
 L = 10 #longueur du deuxième coté du réseau
-I = c(l,L) #ici le réseau est un carré : [|0, l|] x [|0, L|]
+I = c(l,L) #ici le réseau est un carré : [|1, l|] x [|1, L|]
 
 #paramètres du jeu de vecteurs
 
