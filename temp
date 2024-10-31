@@ -1,0 +1,115 @@
+# INITIALISATION DES PARAMETRES
+
+#creation d'un jeu de vecteurs
+
+p = 2 # dimension de l'espace des données
+r = 100 # nombres de vecteurs
+# on choisit mu comme etant la loi d'un VA uniforme
+Vx = L*runif(r) # coordonnées selon des vecteurs selon x
+Vy = L*runif(r) # coordonnées selon des vecteurs selon y
+V = list() # liste des vecteurs
+
+
+
+
+# todo : Definir I un sous ensemble de Z^d, i.e la grille/carte/le reseau = la topologie du reseau
+# pour commencer chosir une carte en forme de rectangle ou de carré
+# representer I sous la forme d'un tableau de dimension 2
+L = 10 # choix de la longueur de la grille (grille de taille LxL)
+
+sigma_i = 5
+sigma_f = 0.2
+
+
+sigma = function(t){
+  return(sigma_i*(sigma_f/sigma_i)**(t/M))
+}
+
+# choix de la fonction de voisinnage delta
+delta = function(i, j, t){
+  return(exp(- distance(i, j)**2 /(2*sigma(t)**2)))
+}
+
+
+# choix du parametre d'adaptation epsilon
+epsilon_i = 0.1
+epsilon_f = 0.005
+epsilon = function(t){
+  return(epsilon_i*(epsilon_f/epsilon_i)**(t/m))
+}
+
+
+n = 10 # nombres d'unités (classes)
+M = 10000 # valeur seuil de l'algo
+
+
+
+# ALGORITHME DE KOHONEN
+
+# à t=0 les vecteurs Wi sont initialisés aléatoirement
+Wx = runif(n)
+Wy = runif(n)
+W = list #liste des vecteurs d'etat
+
+distance = function(u, v){
+  sum = 0
+  for (i in 1:dim){
+    sum = sum + (u[i] - v[i])**2
+  }
+  return(sqrt(sum))
+}
+
+
+inf_lexicographique = function(u, v){
+  n = length(u)
+  stop = F
+  i = 1
+  min = u
+  while (!stop & i <= n){
+    if (v[i] < u[i]){
+      min = v
+      stop = T
+    }
+    if (u[i] < v[i]){
+      stop = T
+    }
+  }
+  return (min)
+}
+
+competition = function(x, W){
+  #fonction jouant le role de la phase de competition qui designe l'unité gagnante pour un vecteur x
+  # todo : prendre en compte l'ordre lexicographique en cas d'egalité
+  argmin = 1
+  min = distance(x, W[[1]])
+  for (i in 2:n){
+    if (distance(x, W[[i]]) < min){
+      min = distance(x, W[[i]])
+      argmin = i
+    }
+    if (distance(x, W[[i]]) == min){
+      argmin = inf_lexicographique(W[i], W[argmin])
+    }
+  }
+  return (argmin)
+}
+
+
+cooperation = function(W, x, i_etoile, t){
+  for (j in 1:n){
+    W[j] = W[j] - epsilon(t)*delta(i_etoile, j, t)*(W[j] - x)
+  }
+}
+
+for (t in 1:M){
+  #A l’instant t, l’état du réseau est donné par W (t) = (Wi (t), i ∈ I). 
+  #Un vecteur de l’espace des données x(t + 1) est choisi aléatoirement.
+  i = sample(1:r, size = 1)
+  x = V[[i]]
+  #phase de competition
+  i_etoile = competition(x, W)
+  
+  #phase de cooperation
+  cooperation(W, x, i_etoile, t)
+}
+
