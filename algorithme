@@ -9,8 +9,6 @@ for (i in 1:N){
   }
 }
 
-plot(X[,1], X[,2])
-
 #Initialisation aleatoire des vecteurs W_i sur [|0, l|]^d
 W = array(dim = c(I[1],I[2], p))
 for (i in 1:I[1]){
@@ -21,20 +19,21 @@ for (i in 1:I[1]){
     
   }
 }
-W
+
 points(W[,,1],W[,,2],col='red')
 
 competition = function(x, W){
+  #phase de competition : désigne l'unité gagnante pour un vecteur x de l'espace des données
   argmin = c(1,1)
-  min = dist(x, W[1,1,], d)
+  min = dist(x, W[1,1,], p)
   for (i in 1:I[1]){
     for (j in 1:I[2]){
-      if (dist(x, W[i,j,], d) < min){
+      if (dist(x, W[i,j,], p) < min){
         argmin = c(i,j)
-        min = dist(x, W[i,j,], d)
+        min = dist(x, W[i,j,], p)
       }
-      if (dist(x, W[i,j,], d) == min){
-        argmin = min_lexicographique(W[i,j,], W[argmin[1],argmin[2],], d)
+      if (dist(x, W[i,j,], p) == min){
+        argmin = min_lexicographique(c(i,j), argmin, d)
       }
     }
 
@@ -42,14 +41,11 @@ competition = function(x, W){
   return(argmin)
 }
 
-cooperation = function(t, W, x, i_etoile){
-  compt = 1
+cooperation = function(t, W, x, i_etoile, d){
   for (i in 1:I[1]){
     for (j in 1:I[2]){
-      #print(compt)
-      #print(W[i,j,])
-      W[i,j,] = W[i,j,] - epsilon(t)*delta(t, i_etoile, c(i, j))*(W[i,j,] - x)
-      #compt = compt + 1
+      W[i,j,] = W[i,j,] - epsilon(t)*delta(t, i_etoile, c(i, j), d)*(W[i,j,] - x)
+
     }
   }
   return(W)
@@ -60,6 +56,6 @@ cooperation = function(t, W, x, i_etoile){
 for (t in 1:M){
   x = X[sample(N, size = 1),] #un vecteur de l'espace des donnees est choisi aléatoirement
   i_etoile = competition(x, W)
-  W = cooperation(t, W, x, i_etoile)
+  W = cooperation(t, W, x, i_etoile, d)
 }
 points(W[,,1],W[,,2],col='green')
