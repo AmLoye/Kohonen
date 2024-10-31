@@ -1,51 +1,65 @@
-source("init_parametres.R")
+#source("init_parametres.R")
 
 #creation d'un jeu de vecteurs selon une loi uniforme sur [|0, l|]^d
 X = array(dim = c(N, p))
 for (i in 1:N){
   for (j in 1:p){
-    X[i, j] = sample(l)
+    #X[i, j] = sample(l, size=1)
+    X[i, j] = l*runif(1)
   }
 }
+
+plot(X[,1], X[,2])
 
 #Initialisation aleatoire des vecteurs W_i sur [|0, l|]^d
 W = array(dim = c(I[1],I[2], p))
 for (i in 1:I[1]){
   for (j in 1:I[2]){
     for(k in 1:p){
-      W[i, j, k] = sample(l)
+      W[i, j, k] = l*runif(1)
     }
     
   }
 }
-
+W
+points(W[,,1],W[,,2],col='red')
 
 competition = function(x, W){
   argmin = c(1,1)
   min = dist(x, W[1,1,], d)
   for (i in 1:I[1]){
     for (j in 1:I[2]){
-      
+      if (dist(x, W[i,j,], d) < min){
+        argmin = c(i,j)
+        min = dist(x, W[i,j,], d)
+      }
+      if (dist(x, W[i,j,], d) == min){
+        argmin = min_lexicographique(W[i,j,], W[argmin[1],argmin[2],], d)
+      }
     }
-    if ((dist(x, W[i,j,], d) < min) | ((dist(x, W[i,j,], d) == min) & min_lexicographique(W[argmin[1],argmin[2],], W[i,j,], d) == W[i,j,])){
-      argmin = c(i,j)
-      min = dist(x, W[i,j,], d)
-    }
+
   }
   return(argmin)
 }
 
 cooperation = function(t, W, x, i_etoile){
+  compt = 1
   for (i in 1:I[1]){
     for (j in 1:I[2]){
+      #print(compt)
+      #print(W[i,j,])
       W[i,j,] = W[i,j,] - epsilon(t)*delta(t, i_etoile, c(i, j))*(W[i,j,] - x)
+      #compt = compt + 1
     }
   }
   return(W)
 }
 
-for (t in range 1:M){
-  x = X[sample(N),] #un vecteur de l'espace des donnees est choisi aléatoirement
+
+
+for (t in 1:M){
+  x = X[sample(N, size = 1),] #un vecteur de l'espace des donnees est choisi aléatoirement
   i_etoile = competition(x, W)
   W = cooperation(t, W, x, i_etoile)
 }
+points(W[,,1],W[,,2],col='green')
