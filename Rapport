@@ -1,1 +1,129 @@
+Compte-rendu 
+Classification et représentation de données par cartes de Kohonen 
+par Youness Moustakim et Amaury Loye
+
+
+Objectif : 
+•	Implémentation de l’algorithme de Kohonen.
+•	Rendre l’application interactive par la réalisation d’une interface R-shiny.
+On se limitera au cas des données en dimension 2 et une grille de dimension 2.
+
+Implémentation de l’algorithme de Kohonen
+
+Partie 1 : Initialisation des paramètres
+
+ 
+#topologie du réseau
+d = 2 #dimension du réseau
+n = 100 #nombre de neurones du réseau
+l = 10 #longueur du premier coté du réseau
+L = 10 #longueur du deuxième coté du réseau
+I = c(l,L) #ici le réseau est un carré : [|1, l|] x [|1, L|]
+
+#paramètres du jeu de vecteurs
+
+N = 300 #nombre de vecteurs
+p = 2 #dimension des vecteurs
+
+#paramètres de l'algo
+M = 1000 #seuil de l'algo
+dist = function(i, j, d){
+  #calcul la distance euclidienne entre deux neurones i et j
+  sum = 0
+  for (k in 1:d){
+    sum = sum + (i[k] - j[k])**2
+  }
+  return(sqrt(sum))
+}
+min_lexicographique = function(u, v, d){
+  for (i in 1:d){
+    if (u[i] < v[i]){
+      return(u)
+    }
+    if (v[i] < u[i]){
+      return(v)
+    }
+  }
+  return(u)
+}
+
+sigma_i = 5
+sigma_f = 0.2
+sigma = function(t){
+  return(sigma_i*((sigma_f/sigma_i)**(t/M)))
+}
+
+delta = function(t, i, j){
+  return(exp(-(dist(i, j)**2)/(2*sigma(t)**2)))
+}
+
+epsilon_i = 0.1
+epsilon_f = 0.005
+epsilon = function(t){
+  return(epsilon_i*(epsilon_f/epsilon_i)**(t/M))
+} 
+
+Partie 2 : Implémentation de l’algorithme
+
+ 
+#source("init_parametres.R")
+#creation d'un jeu de vecteurs selon une loi uniforme sur [|0, l|]^d
+X = array(dim = c(N, p))
+for (i in 1:N){
+  for (j in 1:p){
+    #X[i, j] = sample(l, size=1)
+    X[i, j] = l*runif(1)
+  }
+}
+
+#Initialisation aleatoire des vecteurs W_i sur [|0, l|]^d
+W = array(dim = c(I[1],I[2], p))
+for (i in 1:I[1]){
+  for (j in 1:I[2]){
+    for(k in 1:p){
+      W[i, j, k] = l*runif(1)
+    }
+    
+  }
+}
+
+points(W[,,1],W[,,2],col='red')
+
+competition = function(x, W){
+  #phase de competition : désigne l'unité gagnante pour un vecteur x de l'espace des données
+  argmin = c(1,1)
+  min = dist(x, W[1,1,], p)
+  for (i in 1:I[1]){
+    for (j in 1:I[2]){
+      if (dist(x, W[i,j,], p) < min){
+        argmin = c(i,j)
+        min = dist(x, W[i,j,], p)
+      }
+      if (dist(x, W[i,j,], p) == min){
+        argmin = min_lexicographique(c(i,j), argmin, d)
+      }
+    }
+
+  }
+  return(argmin)
+}
+
+cooperation = function(t, W, x, i_etoile, d){
+  for (i in 1:I[1]){
+    for (j in 1:I[2]){
+      W[i,j,] = W[i,j,] - epsilon(t)*delta(t, i_etoile, c(i, j), d)*(W[i,j,] - x)
+
+    }
+  }
+  return(W)
+}
+
+for (t in 1:M){
+  x = X[sample(N, size = 1),] #un vecteur de l'espace des donnees est choisi aléatoirement
+  i_etoile = competition(x, W)
+  W = cooperation(t, W, x, i_etoile, d)
+}
+points(W[,,1],W[,,2],col='green')
+ 
+Réalisation de l’interface R-shiny
 
