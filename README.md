@@ -1,6 +1,8 @@
 # Kohonen
 Projet 1 :
 Classification et représentation de données par cartes de Kohonen (R, R-shiny)
+Youness Moustakim et Amaury Loye
+
 
 Travail à faire : 
 Dans le cadre de ce projet, il est demandé d’implémenter cet algorithme et de réaliser une
