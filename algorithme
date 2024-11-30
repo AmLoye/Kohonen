@@ -1,61 +1,187 @@
 #source("init_parametres.R")
 
+library(ggplot2)
+
+
+dist = function(u, v){
+  #calcul la distance euclidienne entre deux vecteurs u et v
+  return(sqrt(sum((u-v)^2)))
+}
+
+min_lexicographique = function(i, j){
+  #renvoie la plus petite unité pour l'ordre lexicographique entre deux unités i et j
+  for (k in 1:length(i)){
+    if (i[k] < j[k]){
+      return(i)
+    }
+    if (j[k] < i[k]){
+      return(j)
+    }
+  }
+  return(i)
+}
+
+sigma_i = 5
+sigma_f = 0.2
+sigma = function(t){
+  res = max(sigma_i*((sigma_f/sigma_i)^(t/M)), 10^(-50))
+  return(res)
+}
+
+delta = function(t, i, j){
+  #la fonction de voisinnage definit de IxI dans [0, 1]
+  return(exp(-(dist(i, j)**2)/(2*sigma(t)**2)))
+}
+
+epsilon_i = 0.1
+epsilon_f = 0.005
+epsilon = function(t){
+  #le paramètre d'adaptation
+  return(epsilon_i*(epsilon_f/epsilon_i)**(t/M))
+}
+
+
+vect = function(u, d){ 
+  # fonction qui à une unité associe le numero de son vecteur referent
+  if (d == 1){
+    return(u[1])
+  }
+  if (d == 2){
+    return(u[1] + l*(u[2]-1))
+  }
+}
+
+
+
+unite = function(k, d){
+  # fonction qui au k ieme vecteur réferent associe son unité
+  if(d == 1){
+    return(c(k))
+  }
+  if(d == 2){
+    a = ((k-1) %/% l)
+    b = k-1 - l*a
+    return(c(b+1, a+1))
+  }
+}
+
+
 #creation d'un jeu de vecteurs selon une loi uniforme sur [|0, l|]^d
-X = array(dim = c(N, p))
-for (i in 1:N){
-  for (j in 1:p){
-    #X[i, j] = sample(l, size=1)
-    X[i, j] = l*runif(1)
-  }
-}
 
-#Initialisation aleatoire des vecteurs W_i sur [|0, l|]^d
-W = array(dim = c(I[1],I[2], p))
-for (i in 1:I[1]){
-  for (j in 1:I[2]){
-    for(k in 1:p){
-      W[i, j, k] = l*runif(1)
-    }
+# X = matrix(runif(N*p), nrow = p, ncol = N)
+# plot(X[1,], X[2,], col = "blue" )
+
+#Iris
+# Z = matrix(, nrow = 2, ncol = 150)
+# Z[1,] = iris$Sepal.Length
+# 
+# Z[2,] = iris$Sepal.Width
+# print(Z)
+# plot(Z[1,], Z[2,])
+
+
+#vecteurs gaussiens
+X = matrix(c(rnorm(50, mean = -3), rnorm(50, mean = 3), rnorm(50, mean = -3), rnorm(50, mean = 3)), nrow = 2, byrow = TRUE)
+#plot(X[1,], X[2,], col = "green")
+
+
+
+# competition = function(x, W, d, n){
+#   #phase de competition : désigne l'unité gagnante pour un vecteur x de l'espace des données
+#   # print(paste("W competition", W))
+#   # print(W)
+#   # print(W[,1])
+#   # argmin = (unite(1, d))
+#   # print(paste("first argmin =", argmin))
+#   # print(paste("x = ", x))
+#   # 
+#   # print(paste("W[, 1] = ", W[, 1]))
+#   # print(paste("dist(x, W[, 1]) =", dist(x, W[, 1])))
+#   # min = dist(x, W[, 1])
+#   # print(paste("first min =", min))
+# 
+#   for (i in 2:n){
+#     # print(paste("min =", min))
+#     # print(paste("argmin =", argmin))
+#     # print(paste("dist =", dist(x, W[,i])))
+#     # print(paste("dist < min =", dist(x, W[,i]) < min))
+#     if (dist(x, W[,i]) < min){
+#       argmin = unite(i, d)
+#       min = dist(x, W[,i])
+#     }
+#     if (dist(x, W[,i]) == min){
+#       argmin = min_lexicographique(unite(i, d), argmin)
+#     }
+#     # print(paste("new min =", min))
+#     # print(paste("new argmin =", argmin))
+#   }
+#   return(argmin)
+# }
+
+
+competition = function(x, W, d, n){
+  min = Inf
+  argmin = unite(1, d)
+  
+  for (i in 1:n) {
+    current_dist = dist(x, W[, i])
+    print(paste("i =", i, "current_dist =", current_dist))
     
-  }
-}
-
-points(W[,,1],W[,,2],col='red')
-
-competition = function(x, W){
-  #phase de competition : désigne l'unité gagnante pour un vecteur x de l'espace des données
-  argmin = c(1,1)
-  min = dist(x, W[1,1,], p)
-  for (i in 1:I[1]){
-    for (j in 1:I[2]){
-      if (dist(x, W[i,j,], p) < min){
-        argmin = c(i,j)
-        min = dist(x, W[i,j,], p)
-      }
-      if (dist(x, W[i,j,], p) == min){
-        argmin = min_lexicographique(c(i,j), argmin, d)
-      }
+    if (current_dist < min) {
+      min = current_dist
+      argmin = unite(i, d)
+    } else if (current_dist == min) {
+      argmin = min_lexicographique(unite(i, d), argmin)
     }
-
   }
+  print(paste("Final argmin =", argmin))
   return(argmin)
 }
 
-cooperation = function(t, W, x, i_etoile, d){
-  for (i in 1:I[1]){
-    for (j in 1:I[2]){
-      W[i,j,] = W[i,j,] - epsilon(t)*delta(t, i_etoile, c(i, j), d)*(W[i,j,] - x)
 
+cooperation = function(t, W, x, i_etoile, d, n){
+  for (j in 1:n){
+    W[,j] = W[,j] - epsilon(t)*delta(t, i_etoile, unite(j, d))*(W[,j] - x)
+      
     }
-  }
   return(W)
 }
 
 
 
-for (t in 1:M){
-  x = X[sample(N, size = 1),] #un vecteur de l'espace des donnees est choisi aléatoirement
-  i_etoile = competition(x, W)
-  W = cooperation(t, W, x, i_etoile, d)
+algo = function(X, d, l, M, bornes){
+  N = ncol(X) # nombres de vecteurs de l'espace des données
+  n = l**d #nombre de neurones du réseau
+  Wx = bornes[1] + (bornes[2] - bornes[1]) * runif(n)
+  Wy = bornes[3] + (bornes[4] - bornes[3]) * runif(n)
+  W = matrix(c(Wx, Wy), nrow = 2, ncol = n, byrow = TRUE)
+  plot(X[1,], X[2,], col = "blue")
+  points(W[1,], W[2,], col = "red")
+  ggplot(mapping = aes(x = X[, 1], y = X[, 2]))
+  +
+    geom_point()
+  
+  for (t in 1:M){
+    print(t)
+    k = sample(N, size = 1)
+    x = X[, k] #un vecteur de l'espace des donnees est choisi aléatoirement
+    # print(paste("W before =", W))
+    i_etoile = competition(x, W, d, n)
+    # print(i_etoile)
+    # print(paste("W between =", W))
+    W = cooperation(t, W, x, i_etoile, d, n)
+    # print(paste("W after =", W))
+
+  }
+  plot(X[1,], X[2,], col = "black")
+  points(W[1,], W[2,], col = "red")
 }
-points(W[,,1],W[,,2],col='green')
+
+algo(X, d = 1, l = 4, M = 10000, bornes = c(-5, 5, -5, 5))
+
+
+
+
+
+
+
