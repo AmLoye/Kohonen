@@ -1,57 +1,37 @@
-#topologie du réseau
-
-d = 2 #dimension du réseau
-n = 100 #nombre de neurones du réseau
-l = 10 #longueur du premier coté du réseau
-L = 10 #longueur du deuxième coté du réseau
-I = c(l,L) #ici le réseau est un carré : [|1, l|] x [|1, L|]
-
-#paramètres du jeu de vecteurs
-
-N = 300 #nombre de vecteurs
-p = 2 #dimension des vecteurs
-
-
-#paramètres de l'algo
-
-M = 1000 #seuil de l'algo
-
-dist = function(i, j, d){
-  #calcul la distance euclidienne entre deux neurones i et j
-  sum = 0
-  for (k in 1:d){
-    sum = sum + (i[k] - j[k])**2
-  }
-  return(sqrt(sum))
+dist = function(u, v){
+  #calcul la distance euclidienne entre deux vecteurs u et v
+  return(sqrt(sum((u-v)^2)))
 }
 
-min_lexicographique = function(u, v, d){
-  for (i in 1:d){
-    if (u[i] < v[i]){
-      return(u)
-    }
-    if (v[i] < u[i]){
-      return(v)
-    }
-  }
-  return(u)
-}
 
 sigma_i = 5
 sigma_f = 0.2
-sigma = function(t){
-  return(sigma_i*((sigma_f/sigma_i)**(t/M)))
+sigma = function(t, M){
+  # on fixe une valeur minimum pour éviter une division par zero dans la fonction delta
+  res = max(sigma_i*((sigma_f/sigma_i)^(t/M)), 10^(-50))
+  return(res)
 }
 
-delta = function(t, i, j){
-  return(exp(-(dist(i, j)**2)/(2*sigma(t)**2)))
+delta = function(t, i, j, M){
+  #la fonction de voisinnage definit de IxI dans [0, 1]
+  return(exp(-(dist(i, j)^2)/(2*sigma(t, M)**2)))
 }
 
 epsilon_i = 0.1
 epsilon_f = 0.005
-epsilon = function(t){
+epsilon = function(t, M){
+  #le paramètre d'adaptation
   return(epsilon_i*(epsilon_f/epsilon_i)**(t/M))
 }
 
 
+#creation d'un jeu de vecteurs
 
+#loi uniforme
+Z = matrix(runif(2000), nrow = 2, ncol = 1000)
+#vecteurs gaussiens
+Y = matrix(c(rnorm(50, mean = -3)/6, rnorm(50, mean = 3)/6, rnorm(50, mean = -3)/6, rnorm(50, mean = 3)/6), nrow = 2, byrow = TRUE)
+
+A = matrix(runif(6), nrow = 2, ncol = 3)
+#Iris
+# Z = matrix(c(iris$Sepal.Length, iris$Sepal.Width), nrow = 2)
