@@ -1,31 +1,7 @@
 library(ggplot2)
+source("~/Documents/euria/informatique/projet_info/init_parametres.R")
+source("~/Documents/euria/informatique/projet_info/fonctions_affichage.R")
 
-
-dist = function(u, v){
-  #calcul la distance euclidienne entre deux vecteurs u et v
-  return(sqrt(sum((u-v)^2)))
-}
-
-
-sigma_i = 5
-sigma_f = 0.2
-sigma = function(t, M){
-  # on fixe une valeur minimum pour éviter une division par zero dans la fonction delta
-  res = max(sigma_i*((sigma_f/sigma_i)^(t/M)), 10^(-50))
-  return(res)
-}
-
-delta = function(t, i, j, M){
-  #la fonction de voisinnage definit de IxI dans [0, 1]
-  return(exp(-(dist(i, j)^2)/(2*sigma(t, M)**2)))
-}
-
-epsilon_i = 0.1
-epsilon_f = 0.005
-epsilon = function(t, M){
-  #le paramètre d'adaptation
-  return(epsilon_i*(epsilon_f/epsilon_i)**(t/M))
-}
 
 
 vect = function(u, d, l){ 
@@ -37,7 +13,6 @@ vect = function(u, d, l){
     return(u[1] + l*(u[2]-1))
   }
 }
-
 
 
 unite = function(k, d, l){
@@ -53,70 +28,37 @@ unite = function(k, d, l){
 }
 
 
-#creation d'un jeu de vecteurs
-
-#loi uniforme
-X = matrix(runif(1000), nrow = 2, ncol = 1000)
-#vecteurs gaussiens
-Y = matrix(c(rnorm(50, mean = -3), rnorm(50, mean = 3), rnorm(50, mean = -3), rnorm(50, mean = 3)), nrow = 2, byrow = TRUE)
-
-#Iris
-Z = matrix(c(iris$Sepal.Length, iris$Sepal.Width), nrow = 2)
-
-affiche_donnees = function(X){
-  p = ggplot(
-    mapping = aes(x = X[1,], y = X[2,])) +
-    geom_point() 
-  print(p)
-}
-
-affiche_grille = function(t, W, d, l, n){
-    if(d == 1){
-      p = ggplot(
-        mapping = aes(x = W[1,], y = W[2,])) +
-        geom_point() +
-        geom_segment(mapping = aes(x = W[1, 1:(n-1)], y = W[2, 1:(n-1)], xend = W[1, 2:n], yend = W[2, 2:n])) +
-        labs(title = paste("grille à la", t, "ème iteration"),
-             x = "x",
-             y = "y")
-      print(p)
-    }
-    if(d == 2){
-      # Connexions horizontales (dans chaque rangée, sauf le bord droit)
-      ind_h = which((1:n) %% l != 0)
-      x_h = W[1, ind_h]
-      y_h = W[2, ind_h]
-      xend_h = W[1, ind_h + 1]
-      yend_h = W[2, ind_h + 1]
-      
-      # Connexions verticales (dans chaque colonne, sauf le bord sup)
-      ind_v = which((1:n) + l <= n)
-      x_v = W[1, ind_v]
-      y_v = W[2, ind_v]
-      xend_v = W[1, ind_v + l]
-      yend_v = W[2, ind_v + l]
-      
-      x = c(x_h, x_v)
-      y = c(y_h, y_v)
-      xend = c(xend_h, xend_v)
-      yend = c(yend_h, yend_v)
-      
-      p = ggplot(
-        mapping = aes(x = W[1,], y = W[2,])) +
-        geom_point() +
-        geom_segment(mapping = aes(x = x, y = y, xend = xend, yend = yend)) +
-        labs(title = paste("grille à la", t, "ème iteration"),
-             x = "x",
-             y = "y")
-      print(p)
-    }
-}
+df_classes <- function(X, W, d, n) {
   
-
+  # Fonction qui donne une classe en fonction des distances aux W_i
+  f = function(x) {
+    vect_dist = sapply(1:n, function(i) { dist(x, W[, i]) })
+    argmin = which(vect_dist == min(vect_dist))
+    return(argmin[1])
+  }
+  
+  
+  classes_X = apply(X, MARGIN = 2, f)
+  df_X = data.frame(
+    xcoord = X[1, ],
+    ycoord = X[2, ],
+    Classe = classes_X,
+    Type = "données"
+  )
+  
+  df_W = data.frame(
+    xcoord = W[1, ],
+    ycoord = W[2, ],
+    Classe = 1:n,
+    Type = "vecteur code"
+  )
+  
+  df = rbind(df_X, df_W)
+  return(df)
+}
 
   
 competition = function(x, W, d, n){
-  #phase de competition : désigne l'unité gagnante pour un vecteur x de l'espace des données
   application_partielle_dist = function(i){
     dist(x, W[, i])
   }
@@ -126,44 +68,17 @@ competition = function(x, W, d, n){
 }
 
 
-
 cooperation = function(t, W, x, i_etoile, d, l, n, M){
   for (j in 1:n){
     W[,j] = W[,j] - epsilon(t, M)*delta(t, i_etoile, unite(j, d, l), M)*(W[,j] - x)
-      
     }
   return(W)
 }
 
 
-classes = function(X, W, d, n){
-  #associe à chaque vecteur de l'espace des données le W_i qui lui est associé
-  f = function(x){
-    vect_dist = sapply(1:n, function(i){dist(x, W[, i])})
-    argmin = which(vect_dist == min(vect_dist))
-    return(argmin[1])
-  }
-  classes_X = apply(X, MARGIN = 2, f)
-  classes = sapply(1:n, function(i){return(which(classes_X == i))})
-  return(classes)
-}
-
-df_classes = function(X, W, d, n){
-  #associe à chaque vecteur de l'espace des données le W_i qui lui est associé
-  f = function(x){
-    vect_dist = sapply(1:n, function(i){dist(x, W[, i])})
-    argmin = which(vect_dist == min(vect_dist))
-    return(argmin[1])
-  }
-  classes_X = apply(X, MARGIN = 2, f)
-  df = data.frame(xcoord = X[1, ], ycoord = X[2, ], Classe = classes_X)
-  return(df)
-}
-
-
-algo = function(X, d, l, M, bornes){
+algo = function(X, d, l, M, bornes, affichage){
   
-  affiche_donnees(X)
+  plot_donnees(X)
   
   N = ncol(X) # nombres de vecteurs de l'espace des données
   n = l**d #nombre de neurones du réseau
@@ -172,31 +87,58 @@ algo = function(X, d, l, M, bornes){
   Wy = bornes[3] + (bornes[4] - bornes[3]) * runif(n)
   W = matrix(c(Wx, Wy), nrow = 2, ncol = n, byrow = TRUE)
   
-  affiche_grille(0, W, d, l, n)
-
-  for (t in 1:M){
-    k = sample(N, size = 1)
-    x = X[, k] #un vecteur de l'espace des donnees est choisi aléatoirement
-    i_etoile = competition(x, W, d, n)
-    W = cooperation(t, W, x, unite(i_etoile, d, l), d, l, n, M)
-
+  if (affichage == 1){
+    print(plot_grille_1(0, X, W, d, l, n))
   }
-  affiche_grille(M, W, d, l, n)
-  # print(classes(X, W, d, n))
-  df = df_classes(X, W, d, n)
-  p = ggplot(data = df,
-         mapping = aes(x = xcoord, y = ycoord, colour = Classe)) +
-    geom_point()
-  print(p)
-  q = ggplot(df, aes(x = xcoord, y = ycoord, color = Classe)) +
-    geom_point(data = transform(df, Classe = NULL), colour = "grey85") +
-    geom_point(show.legend = FALSE) +
-    facet_wrap(~Classe, ncol = l)
-  print(q)
-  
+
+  if (affichage == 2){
+    print(plot_grille_2(0, X, W, d, l, n))
+  }
+
+  k = sample(N, size = M, replace = TRUE)
+    for (t in 1:M){
+      x = X[, k[t]]
+      i_etoile = competition(x, W, d, n)
+      W = cooperation(t, W, x, unite(i_etoile, d, l), d, l, n, M)
+    }
+    if (affichage == 1){
+      print(plot_grille_1(M, X, W, d, l, n))
+    }
+
+    if (affichage == 2){
+      print(plot_grille_2(M, X, W, d, l, n))
+    }
 }
 
-algo(X, d = 2, l = 3, M = 1000, bornes = c(0, 1, 0, 1))
+algo_shiny = function(X, d, l, M, affichage){
+  #fonction utilisée par shiny.R
+  # plot_donnees(X)
+  bornes = c(0, 1, 0, 1)
+  N = ncol(X) # nombres de vecteurs de l'espace des données
+  n = l**d #nombre de neurones du réseau
+  
+  Wx = bornes[1] + (bornes[2] - bornes[1]) * runif(n)
+  Wy = bornes[3] + (bornes[4] - bornes[3]) * runif(n)
+  W = matrix(c(Wx, Wy), nrow = 2, ncol = n, byrow = TRUE)
+  
+  
+  k = sample(N, size = M, replace = TRUE)
+  for (t in 1:M){
+    x = X[, k[t]]
+    # x = runif(2, nrow = 2)
+    i_etoile = competition(x, W, d, n)
+    W = cooperation(t, W, x, unite(i_etoile, d, l), d, l, n, M)
+  }
+  if (affichage == 1){
+    return(plot_grille_1(M, X, W, d, l, n))
+  }
+  
+  if (affichage == 2){
+    return(plot_grille_2(M, X, W, d, l, n))
+  }
+}
+
+#algo(Y, d = 1, l = 2, M = 1000, bornes = c(0, 1, 0, 1), 1)
 
 
 
