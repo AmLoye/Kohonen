@@ -1,4 +1,6 @@
 # Kohonen
+Projet informatique L3 EURIA 2024
+
 Projet 1 :
 Classification et représentation de données par cartes de Kohonen (R, R-shiny)  
 Amaury Loye
